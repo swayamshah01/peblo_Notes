@@ -2,17 +2,8 @@ const { Pool } = require('pg');
 const fs = require('fs/promises');
 const path = require('path');
 
-const isLocalDatabaseUrl = (connectionString) => {
-  try {
-    const { hostname } = new URL(connectionString);
-    return ['localhost', '127.0.0.1', 'postgres'].includes(hostname);
-  } catch (err) {
-    return false;
-  }
-};
-
-const getSslConfig = (connectionString) => {
-  if (!connectionString || isLocalDatabaseUrl(connectionString)) {
+const getSslConfig = () => {
+  if (process.env.DB_SSL === 'false') {
     return false;
   }
 
@@ -20,23 +11,13 @@ const getSslConfig = (connectionString) => {
 };
 
 const getPoolConfig = () => {
-  if (process.env.DATABASE_URL) {
-    return {
-      connectionString: process.env.DATABASE_URL,
-      ssl: getSslConfig(process.env.DATABASE_URL),
-      max: Number(process.env.DB_POOL_MAX || 10),
-      idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
-      connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
-      keepAlive: true,
-    };
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required.');
   }
 
   return {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.DB_NAME || 'peblo_notes',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD,
+    connectionString: process.env.DATABASE_URL,
+    ssl: getSslConfig(),
     max: Number(process.env.DB_POOL_MAX || 10),
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
     connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),

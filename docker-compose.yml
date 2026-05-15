@@ -26,11 +26,7 @@ services:
       - ./Server/.env
     environment:
       DATABASE_URL: postgresql://postgres:swayam123@postgres:5432/peblo_notes
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: peblo_notes
-      DB_USER: postgres
-      DB_PASSWORD: swayam123
+      DB_SSL: "false"
       CLIENT_URL: http://localhost:5173
       PORT: 5000
     depends_on:
