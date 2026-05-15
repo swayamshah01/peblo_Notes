@@ -24,7 +24,7 @@ const getPoolConfig = () => {
     return {
       connectionString: process.env.DATABASE_URL,
       ssl: getSslConfig(process.env.DATABASE_URL),
-      max: Number(process.env.DB_POOL_MAX || 20),
+      max: Number(process.env.DB_POOL_MAX || 10),
       idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
       connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
       keepAlive: true,
@@ -37,7 +37,7 @@ const getPoolConfig = () => {
     database: process.env.DB_NAME || 'peblo_notes',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    max: Number(process.env.DB_POOL_MAX || 20),
+    max: Number(process.env.DB_POOL_MAX || 10),
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
     connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
     keepAlive: true,
@@ -50,10 +50,15 @@ let isDatabaseReady = false;
 let lastDatabaseError = null;
 let schemaInitialized = false;
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const testConnection = async () => {
+  let client;
+
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     client.release();
+    client = null;
     isDatabaseReady = true;
     lastDatabaseError = null;
     console.log('Database connected successfully');
@@ -64,7 +69,39 @@ const testConnection = async () => {
     console.error('Database connection failed:', err.message);
     console.error('Check DATABASE_URL in Server/.env and confirm the PostgreSQL user/password are correct.');
     return false;
+  } finally {
+    if (client) client.release();
   }
+};
+
+const connectWithRetry = async (retries = 5, delayMs = 3000) => {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    let client;
+
+    try {
+      client = await pool.connect();
+      client.release();
+      client = null;
+      isDatabaseReady = true;
+      lastDatabaseError = null;
+      console.log('Database connected');
+      return true;
+    } catch (err) {
+      isDatabaseReady = false;
+      lastDatabaseError = err.message;
+      console.error(`DB Error attempt ${attempt}/${retries}:`, err.message);
+
+      if (attempt === retries) {
+        throw err;
+      }
+
+      await wait(delayMs);
+    } finally {
+      if (client) client.release();
+    }
+  }
+
+  return false;
 };
 
 pool.on('error', (err) => {
@@ -80,6 +117,11 @@ pool.initializeSchema = async () => {
   if (schemaInitialized) return true;
 
   try {
+    await connectWithRetry(
+      Number(process.env.DB_CONNECT_RETRIES || 5),
+      Number(process.env.DB_CONNECT_RETRY_DELAY_MS || 3000)
+    );
+
     const schemaPath = path.join(__dirname, '..', 'db', 'schema.sql');
     const schema = await fs.readFile(schemaPath, 'utf8');
     await pool.query(schema);
@@ -93,18 +135,5 @@ pool.initializeSchema = async () => {
     return false;
   }
 };
-
-pool.connect()
-  .then((client) => {
-    client.release();
-    isDatabaseReady = true;
-    lastDatabaseError = null;
-    console.log('Database connected');
-  })
-  .catch((err) => {
-    isDatabaseReady = false;
-    lastDatabaseError = err.message;
-    console.error('DB Error', err.message);
-  });
 
 module.exports = pool;
