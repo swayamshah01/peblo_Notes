@@ -11,13 +11,23 @@ const isLocalDatabaseUrl = (connectionString) => {
   }
 };
 
+const getSslConfig = (connectionString) => {
+  if (!connectionString || isLocalDatabaseUrl(connectionString)) {
+    return false;
+  }
+
+  return { rejectUnauthorized: false };
+};
+
 const getPoolConfig = () => {
   if (process.env.DATABASE_URL) {
     return {
       connectionString: process.env.DATABASE_URL,
-      ssl: isLocalDatabaseUrl(process.env.DATABASE_URL)
-        ? false
-        : { rejectUnauthorized: false },
+      ssl: getSslConfig(process.env.DATABASE_URL),
+      max: Number(process.env.DB_POOL_MAX || 20),
+      idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
+      connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
+      keepAlive: true,
     };
   }
 
@@ -27,6 +37,10 @@ const getPoolConfig = () => {
     database: process.env.DB_NAME || 'peblo_notes',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
+    max: Number(process.env.DB_POOL_MAX || 20),
+    idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
+    connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
+    keepAlive: true,
   };
 };
 

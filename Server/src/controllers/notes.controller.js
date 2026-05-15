@@ -122,10 +122,13 @@ const getNoteById = async (req, res) => {
 const createNote = async (req, res) => {
   const { title, content, tags } = req.body;
   const userId = req.user.id;
-  const client = await pool.connect();
+  let client;
+  let inTransaction = false;
 
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
+    inTransaction = true;
 
     const { rows } = await client.query(
       `INSERT INTO notes (title, content, user_id)
@@ -140,15 +143,16 @@ const createNote = async (req, res) => {
     }
 
     await client.query('COMMIT');
+    inTransaction = false;
 
     const fullNote = await getNoteWithTags(note.id, userId);
     return res.status(201).json({ note: fullNote });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client && inTransaction) await client.query('ROLLBACK');
     console.error('CreateNote error:', err.message);
     return res.status(500).json({ error: 'Failed to create note.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };
 
@@ -157,20 +161,22 @@ const updateNote = async (req, res) => {
   const { id } = req.params;
   const { title, content, tags, is_archived } = req.body;
   const userId = req.user.id;
-  const client = await pool.connect();
+  let client;
+  let inTransaction = false;
 
   try {
+    client = await pool.connect();
     // Check ownership
     const existing = await client.query(
       'SELECT id FROM notes WHERE id = $1 AND user_id = $2',
       [id, userId]
     );
     if (existing.rows.length === 0) {
-      client.release();
       return res.status(404).json({ error: 'Note not found.' });
     }
 
     await client.query('BEGIN');
+    inTransaction = true;
 
     // Build dynamic update query
     const updates = [];
@@ -203,15 +209,16 @@ const updateNote = async (req, res) => {
     }
 
     await client.query('COMMIT');
+    inTransaction = false;
 
     const fullNote = await getNoteWithTags(id, userId);
     return res.status(200).json({ note: fullNote });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client && inTransaction) await client.query('ROLLBACK');
     console.error('UpdateNote error:', err.message);
     return res.status(500).json({ error: 'Failed to update note.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };
 
