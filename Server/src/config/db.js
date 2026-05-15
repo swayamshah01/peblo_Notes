@@ -1,4 +1,6 @@
 const { Pool } = require('pg');
+const fs = require('fs/promises');
+const path = require('path');
 
 const getPoolConfig = () => {
   if (process.env.DB_PASSWORD || process.env.DB_USER || process.env.DB_NAME) {
@@ -28,6 +30,7 @@ const pool = new Pool(getPoolConfig());
 
 let isDatabaseReady = false;
 let lastDatabaseError = null;
+let schemaInitialized = false;
 
 const testConnection = async () => {
   try {
@@ -55,7 +58,35 @@ pool.on('error', (err) => {
 pool.isReady = () => isDatabaseReady;
 pool.getLastError = () => lastDatabaseError;
 pool.testConnection = testConnection;
+pool.initializeSchema = async () => {
+  if (schemaInitialized) return true;
 
-testConnection();
+  try {
+    const schemaPath = path.join(__dirname, '..', 'db', 'schema.sql');
+    const schema = await fs.readFile(schemaPath, 'utf8');
+    await pool.query(schema);
+    schemaInitialized = true;
+    console.log('Database schema ready');
+    return true;
+  } catch (err) {
+    schemaInitialized = false;
+    lastDatabaseError = err.message;
+    console.error('Database schema initialization failed:', err.message);
+    return false;
+  }
+};
+
+pool.connect()
+  .then((client) => {
+    client.release();
+    isDatabaseReady = true;
+    lastDatabaseError = null;
+    console.log('Database connected');
+  })
+  .catch((err) => {
+    isDatabaseReady = false;
+    lastDatabaseError = err.message;
+    console.error('DB Error', err.message);
+  });
 
 module.exports = pool;

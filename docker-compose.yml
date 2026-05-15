@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: swayam123
+      POSTGRES_DB: peblo_notes
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Server/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d peblo_notes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./Server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./Server/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:swayam123@postgres:5432/peblo_notes
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: peblo_notes
+      DB_USER: postgres
+      DB_PASSWORD: swayam123
+      CLIENT_URL: http://localhost:5173
+      PORT: 5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./client
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
