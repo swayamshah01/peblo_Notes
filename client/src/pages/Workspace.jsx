@@ -186,7 +186,6 @@ export function Workspace() {
           isSaving={isSaving}
           isGeneratingSummary={isGeneratingSummary}
           aiResult={aiResult}
-          onCloseAI={() => setAiResult(null)}
         />
       </div>
       {toast && (

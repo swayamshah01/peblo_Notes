@@ -24,19 +24,3 @@ export function Toast({ message, type = 'info', duration = 3000 }) {
     </div>
   );
 }
-
-export function ToastContainer({ toasts, removeToast }) {
-  return (
-    <div className="fixed bottom-4 right-4 space-y-2 z-50">
-      {toasts.map((toast) => (
-        <div key={toast.id}>
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            duration={toast.duration}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}

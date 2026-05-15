@@ -17,7 +17,6 @@ export function NoteEditor({
   isSaving,
   isGeneratingSummary,
   aiResult,
-  onCloseAI,
 }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -130,7 +129,7 @@ export function NoteEditor({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Save Status */}
           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {isSaving ? 'Saving...' : 'Saved ✓'}
+            {isSaving ? 'Saving...' : 'Saved'}
           </div>
 
           {/* Buttons */}

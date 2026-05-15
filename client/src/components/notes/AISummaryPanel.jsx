@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { Spinner } from '../common/Spinner';
 
 export function AISummaryPanel({
@@ -22,7 +22,8 @@ export function AISummaryPanel({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          ✨ AI Summary
+          <Sparkles size={18} />
+          AI Summary
         </h2>
         <button
           onClick={onClose}

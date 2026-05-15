@@ -85,7 +85,6 @@ export const setNoteArchived = async (id, isArchived) => {
   const response = await api.patch(`/notes/${id}`, { is_archived: isArchived });
   return { ...response, data: normalizeNote(response.data.note) };
 };
-export const archiveNote = (id) => setNoteArchived(id, true);
 export const getUserTags = () => api.get('/notes/tags');
 
 // AI endpoints
