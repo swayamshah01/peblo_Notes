@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Archive, ArchiveRestore, Share2, Trash2, Sparkles, Check } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Archive, ArchiveRestore, ArrowLeft, Share2, Trash2, Sparkles, Check } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TagInput } from './TagInput';
 import { AISummaryPanel } from './AISummaryPanel';
@@ -13,6 +13,7 @@ export function NoteEditor({
   onShare,
   onArchive,
   onGenerateSummary,
+  onBack,
   isSaving,
   isGeneratingSummary,
   aiResult,
@@ -24,9 +25,21 @@ export function NoteEditor({
   const [showAI, setShowAI] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const loadedNoteIdRef = useRef(null);
 
   useEffect(() => {
-    if (note) {
+    const nextNoteId = note?.id || null;
+
+    if (!nextNoteId) {
+      loadedNoteIdRef.current = null;
+      setTitle('');
+      setContent('');
+      setTags([]);
+      return;
+    }
+
+    if (loadedNoteIdRef.current !== nextNoteId) {
+      loadedNoteIdRef.current = nextNoteId;
       setTitle(note.title || '');
       setContent(note.content || '');
       setTags(note.tags || []);
@@ -39,13 +52,24 @@ export function NoteEditor({
   const debouncedContent = useDebounce(content, 1500);
 
   useEffect(() => {
-    if (note && (debouncedTitle !== note.title || debouncedContent !== note.content)) {
+    if (!note) return;
+
+    // When switching notes, the previous note's debounce can resolve late.
+    // Only save once the debounced values match the editor currently on screen.
+    if (debouncedTitle !== title || debouncedContent !== content) {
+      return;
+    }
+
+    const currentTitle = note.title || '';
+    const currentContent = note.content || '';
+
+    if (debouncedTitle !== currentTitle || debouncedContent !== currentContent) {
       onUpdate({
         title: debouncedTitle || 'Untitled',
         content: debouncedContent,
       });
     }
-  }, [debouncedTitle, debouncedContent, note, onUpdate]);
+  }, [debouncedTitle, debouncedContent, title, content, note, onUpdate]);
 
   const handleTagsChange = async (newTags) => {
     setTags(newTags);
@@ -85,6 +109,14 @@ export function NoteEditor({
     <div style={{ flex: 1, backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
       {/* Toolbar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, backgroundColor: 'var(--bg-primary)' }}>
+        <button
+          onClick={onBack}
+          className="icon-button"
+          style={{ marginRight: '12px', flexShrink: 0 }}
+          title="Back"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <div style={{ flex: 1 }}>
           <input
             type="text"

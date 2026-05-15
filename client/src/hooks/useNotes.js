@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import * as noteAPI from '../api/index.js';
 
 export function useNotes() {
@@ -9,6 +9,7 @@ export function useNotes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
+  const saveQueuesRef = useRef(new Map());
 
   // Fetch notes
   const fetchNotes = useCallback(async () => {
@@ -57,24 +58,38 @@ export function useNotes() {
 
   // Update note
   const updateNoteData = useCallback(async (id, data) => {
-    setIsSaving(true);
-    try {
-      const response = await noteAPI.updateNote(id, data);
-      const updatedNote = response.data;
-      if (Array.isArray(notes)) {
-        setNotes(notes.map(n => n.id === id ? updatedNote : n));
-      }
-      if (activeNote?.id === id) {
-        setActiveNote(updatedNote);
-      }
-      return updatedNote;
-    } catch (error) {
-      console.error('Error updating note:', error);
-      throw error;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [notes, activeNote]);
+    const previousSave = saveQueuesRef.current.get(id) || Promise.resolve();
+
+    const nextSave = previousSave
+      .catch(() => {})
+      .then(async () => {
+        setIsSaving(true);
+        try {
+          const response = await noteAPI.updateNote(id, data);
+          const updatedNote = response.data;
+          setNotes((currentNotes) => (
+            Array.isArray(currentNotes)
+              ? currentNotes.map(n => n.id === id ? updatedNote : n)
+              : currentNotes
+          ));
+          setActiveNote((currentNote) => (
+            currentNote?.id === id ? updatedNote : currentNote
+          ));
+          return updatedNote;
+        } catch (error) {
+          console.error('Error updating note:', error);
+          throw error;
+        } finally {
+          if (saveQueuesRef.current.get(id) === nextSave) {
+            saveQueuesRef.current.delete(id);
+            setIsSaving(false);
+          }
+        }
+      });
+
+    saveQueuesRef.current.set(id, nextSave);
+    return nextSave;
+  }, []);
 
   // Delete note
   const deleteNoteData = useCallback(async (id) => {

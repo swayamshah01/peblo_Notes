@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/common/Navbar';
 import { NotesList } from '../components/notes/NotesList';
 import { NoteEditor } from '../components/notes/NoteEditor';
 import { useNotes } from '../hooks/useNotes';
 import { generateSummary } from '../api/index.js';
 import { Toast } from '../components/common/Toast';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 export function Workspace() {
+  const navigate = useNavigate();
   const {
     notes,
     activeNote,
@@ -30,6 +33,8 @@ export function Workspace() {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [allTags, setAllTags] = useState([]);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Extract all unique tags from notes
@@ -59,27 +64,26 @@ export function Workspace() {
     }
   }, [activeNote, updateNoteData]);
 
-  const handleDeleteNote = useCallback(async () => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      try {
-        await deleteNoteData(activeNote.id);
-        setToast({ message: 'Note deleted', type: 'success' });
-      } catch (error) {
-        setToast({ message: 'Failed to delete note', type: 'error' });
-      }
+  const requestDeleteNote = useCallback((note) => {
+    if (note) {
+      setDeleteTarget(note);
     }
-  }, [activeNote, deleteNoteData]);
+  }, []);
 
-  const handleDeleteSpecificNote = useCallback(async (note) => {
-    if (window.confirm(`Delete "${note.title || 'Untitled'}"? This cannot be undone.`)) {
-      try {
-        await deleteNoteData(note.id);
-        setToast({ message: 'Note deleted', type: 'success' });
-      } catch (error) {
-        setToast({ message: 'Failed to delete note', type: 'error' });
-      }
+  const confirmDeleteNote = useCallback(async () => {
+    if (!deleteTarget) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteNoteData(deleteTarget.id);
+      setToast({ message: 'Note deleted', type: 'success' });
+      setDeleteTarget(null);
+    } catch (error) {
+      setToast({ message: 'Failed to delete note', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
-  }, [deleteNoteData]);
+  }, [deleteTarget, deleteNoteData]);
 
   const handleShareNote = useCallback(async () => {
     try {
@@ -143,7 +147,7 @@ export function Workspace() {
       setAiResult(response.data);
     } catch (error) {
       setAiResult({
-        error: error.response?.data?.message || 'Failed to generate summary',
+        error: error.response?.data?.error || error.response?.data?.message || 'Failed to generate summary',
       });
     } finally {
       setIsGeneratingSummary(false);
@@ -168,16 +172,17 @@ export function Workspace() {
           showArchived={showArchived}
           onToggleArchived={() => setShowArchived(!showArchived)}
           onArchiveNote={handleArchiveSpecificNote}
-          onDeleteNote={handleDeleteSpecificNote}
+          onDeleteNote={requestDeleteNote}
           onShareNote={handleShareSpecificNote}
         />
         <NoteEditor
           note={activeNote}
           onUpdate={handleUpdateNote}
-          onDelete={handleDeleteNote}
+          onDelete={() => requestDeleteNote(activeNote)}
           onShare={handleShareNote}
           onArchive={handleArchiveNote}
           onGenerateSummary={handleGenerateSummary}
+          onBack={() => navigate(-1)}
           isSaving={isSaving}
           isGeneratingSummary={isGeneratingSummary}
           aiResult={aiResult}
@@ -186,6 +191,16 @@ export function Workspace() {
       </div>
       {toast && (
         <Toast message={toast.message} type={toast.type} duration={3000} />
+      )}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete this note?"
+          description={`"${deleteTarget.title || 'Untitled'}" will be permanently deleted. This action cannot be undone.`}
+          confirmLabel="Delete note"
+          isLoading={isDeleting}
+          onCancel={() => !isDeleting && setDeleteTarget(null)}
+          onConfirm={confirmDeleteNote}
+        />
       )}
     </div>
   );

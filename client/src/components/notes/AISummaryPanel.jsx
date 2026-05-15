@@ -47,12 +47,27 @@ export function AISummaryPanel({
       ) : aiResult ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Summary */}
-          {aiResult.summary && (
+          {(aiResult.summary || aiResult.summaryPoints?.length > 0) && (
             <div>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>Summary</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6 }}>
-                {aiResult.summary}
-              </p>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '10px' }}>Summary</h3>
+              {aiResult.summaryPoints?.length > 0 ? (
+                <div style={{ display: 'grid', gap: '14px' }}>
+                  {aiResult.summary && (
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                      {aiResult.summary}
+                    </p>
+                  )}
+                  <ul className="ai-point-list">
+                    {aiResult.summaryPoints.map((point, idx) => (
+                      <li key={idx}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6 }}>
+                  {aiResult.summary}
+                </p>
+              )}
             </div>
           )}
 

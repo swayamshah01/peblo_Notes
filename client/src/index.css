@@ -999,6 +999,83 @@ code {
   color: var(--error);
 }
 
+.confirm-dialog {
+  width: min(430px, 100%);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+}
+
+.confirm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.confirm-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.confirm-icon.danger {
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 14%, transparent);
+}
+
+.confirm-copy h2 {
+  color: var(--text-primary);
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.confirm-copy p {
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ai-point-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ai-point-list li {
+  position: relative;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  padding-left: 18px;
+}
+
+.ai-point-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
 .preview-lines .short {
   width: 62%;
 }

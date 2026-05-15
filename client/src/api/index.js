@@ -91,7 +91,16 @@ export const getUserTags = () => api.get('/notes/tags');
 // AI endpoints
 export const generateSummary = async (id) => {
   const response = await api.post(`/ai/notes/${id}/generate-summary`);
-  return { ...response, data: response.data.summary };
+  return {
+    ...response,
+    data: {
+      summary: response.data.summary,
+      summaryPoints: response.data.summaryPoints || response.data.summary_points || [],
+      actionItems: response.data.actionItems || response.data.action_items || [],
+      suggestedTitle: response.data.suggestedTitle || response.data.suggested_title || '',
+      model: response.data.model,
+    },
+  };
 };
 
 // Shared endpoints
