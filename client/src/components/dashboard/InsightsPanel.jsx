@@ -1,20 +1,21 @@
 import React from 'react';
-import { FileText, Archive, Sparkles, Share2 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Archive, ArrowRight, FileText, Share2, Sparkles, Tags } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Link } from 'react-router-dom';
 
 export function InsightsPanel({ insights }) {
   if (!insights) {
-    return <div>Loading insights...</div>;
+    return <div className="dashboard-shell">Loading insights...</div>;
   }
 
   const stats = [
-    { label: 'Total Notes', value: insights.totalNotes || 0, icon: FileText, color: '#3b82f6' },
-    { label: 'Archived Notes', value: insights.archivedNotes || 0, icon: Archive, color: '#fbbf24' },
-    { label: 'AI Summaries This Week', value: insights.aiSummariesThisWeek || 0, icon: Sparkles, color: '#a78bfa' },
-    { label: 'Public Notes', value: insights.publicNotes || 0, icon: Share2, color: '#22c55e' },
+    { label: 'Active notes', value: insights.totalNotes, icon: FileText, tone: 'blue' },
+    { label: 'Public links', value: insights.publicNotes, icon: Share2, tone: 'green' },
+    { label: 'Archived', value: insights.archivedNotes, icon: Archive, tone: 'amber' },
+    { label: 'AI runs this week', value: insights.aiSummariesThisWeek, icon: Sparkles, tone: 'violet' },
   ];
 
-  const chartData = insights.weeklyActivity || [
+  const chartData = insights.weeklyActivity?.length ? insights.weeklyActivity : [
     { day: 'Mon', notes: 0 },
     { day: 'Tue', notes: 0 },
     { day: 'Wed', notes: 0 },
@@ -24,108 +25,109 @@ export function InsightsPanel({ insights }) {
     { day: 'Sun', notes: 0 },
   ];
 
+  const topCount = insights.topTags?.[0]?.count || 1;
+
   return (
-    <div style={{ flex: 1, backgroundColor: 'var(--bg-primary)', padding: '32px', overflowY: 'auto' }}>
-      <div style={{ maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'white', marginBottom: '32px' }}>Dashboard</h1>
-
-        {/* Stats Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '48px' }}>
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="card"
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px' }}>{stat.label}</p>
-                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'white' }}>{stat.value}</p>
-                  </div>
-                  <Icon style={{ width: '32px', height: '32px', color: stat.color }} />
-                </div>
-              </div>
-            );
-          })}
+    <div className="dashboard-shell">
+      <div className="dashboard-header">
+        <div>
+          <p className="eyebrow dashboard-eyebrow">Workspace command center</p>
+          <h1>Dashboard</h1>
+          <p>Track note volume, shared work, archive hygiene, and weekly writing momentum.</p>
         </div>
+        <Link to="/workspace" className="btn btn-primary hero-button">
+          Open workspace
+          <ArrowRight size={18} />
+        </Link>
+      </div>
 
-        {/* Weekly Activity Chart */}
-        <div className="card" style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'white', marginBottom: '24px' }}>Weekly Activity</h2>
-          <ResponsiveContainer width="100%" height={300}>
+      <section className="metric-grid">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <article key={stat.label} className={`metric-card tone-${stat.tone}`}>
+              <div className="metric-icon"><Icon size={22} /></div>
+              <span>{stat.label}</span>
+              <strong>{stat.value || 0}</strong>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="dashboard-grid">
+        <article className="dashboard-panel chart-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Weekly activity</h2>
+              <p>Notes created over the last seven days.</p>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={310}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" stroke="var(--text-secondary)" />
-              <YAxis stroke="var(--text-secondary)" />
+              <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+              <XAxis dataKey="day" stroke="var(--text-muted)" tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--text-muted)" tickLine={false} axisLine={false} allowDecimals={false} />
               <Tooltip
+                cursor={{ fill: 'var(--accent-soft)' }}
                 contentStyle={{
-                  backgroundColor: 'var(--bg-secondary)',
+                  backgroundColor: 'var(--surface-elevated)',
                   border: '1px solid var(--border)',
                   borderRadius: '8px',
-                  color: 'white',
+                  color: 'var(--text-primary)',
                 }}
               />
-              <Bar dataKey="notes" fill="var(--accent)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="notes" fill="var(--accent)" radius={[7, 7, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </article>
+
+        <article className="dashboard-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Top tags</h2>
+              <p>Your most used active-note labels.</p>
+            </div>
+            <Tags size={20} />
+          </div>
+          <div className="tag-rank-list">
+            {insights.topTags?.length ? insights.topTags.map((tag) => (
+              <div className="tag-rank" key={tag.name}>
+                <div>
+                  <strong>{tag.name}</strong>
+                  <span>{tag.count} notes</span>
+                </div>
+                <div className="rank-track">
+                  <span style={{ width: `${(tag.count / topCount) * 100}%` }} />
+                </div>
+              </div>
+            )) : (
+              <div className="quiet-state">No tags yet.</div>
+            )}
+          </div>
+        </article>
+      </section>
+
+      <section className="dashboard-panel recent-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Recently edited</h2>
+            <p>The latest notes touched in this workspace.</p>
+          </div>
         </div>
-
-        {/* Top Tags */}
-        {insights.topTags && insights.topTags.length > 0 && (
-          <div className="card" style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'white', marginBottom: '24px' }}>Top Tags</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {insights.topTags.map((tag) => (
-                <div key={tag.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>{tag.name}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '128px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '8px', height: '8px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          backgroundColor: 'var(--accent)',
-                          height: '100%',
-                          width: `${(tag.count / (insights.topTags[0]?.count || 1)) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <span style={{ color: 'white', fontWeight: '500', width: '32px', textAlign: 'right' }}>{tag.count}</span>
-                  </div>
-                </div>
-              ))}
+        <div className="recent-list">
+          {insights.recentlyEdited?.length ? insights.recentlyEdited.map((note) => (
+            <div className="recent-row" key={note.id}>
+              <div>
+                <strong>{note.title || 'Untitled'}</strong>
+                <span>{note.isArchived ? 'Archived' : 'Active'}</span>
+              </div>
+              <time>{note.updatedAtLabel}</time>
             </div>
-          </div>
-        )}
-
-        {/* Recently Edited */}
-        {insights.recentlyEdited && insights.recentlyEdited.length > 0 && (
-          <div className="card">
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'white', marginBottom: '24px' }}>Recently Edited</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {insights.recentlyEdited.map((note) => (
-                <div
-                  key={note.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px',
-                    backgroundColor: 'var(--bg-tertiary)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background-color 150ms ease',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                >
-                  <span style={{ color: 'var(--text-secondary)' }}>{note.title || 'Untitled'}</span>
-                  <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{note.updatedAt}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+          )) : (
+            <div className="quiet-state">No recent notes yet.</div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

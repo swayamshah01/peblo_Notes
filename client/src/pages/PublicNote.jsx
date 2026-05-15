@@ -28,7 +28,7 @@ export function PublicNote() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Spinner size="lg" />
       </div>
     );
@@ -36,10 +36,10 @@ export function PublicNote() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Note not found</h1>
-          <p className="text-[#a0a0a0]">{error}</p>
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Note not found</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
         </div>
       </div>
     );

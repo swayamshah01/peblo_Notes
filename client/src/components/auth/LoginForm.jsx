@@ -8,7 +8,7 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { login: authLogin } = useAuth();
   const navigate = useNavigate();
 
@@ -16,12 +16,16 @@ export function LoginForm() {
     e.preventDefault();
     setError('');
 
+    setIsLoading(true);
+
     try {
       const response = await login({ email, password });
       authLogin(response.data.user, response.data.token);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -29,7 +33,7 @@ export function LoginForm() {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }} className="flex items-center justify-center p-4">
       <div style={{ maxWidth: '448px', backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }} className="w-full border rounded-lg p-8">
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
             <span style={{ color: 'var(--accent)' }}>Peblo</span> Notes
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>Sign in to your workspace</p>
@@ -68,6 +72,7 @@ export function LoginForm() {
 
           <button
             type="submit"
+            disabled={isLoading}
             className="btn btn-primary"
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >

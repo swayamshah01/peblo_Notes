@@ -1,12 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Workspace } from './pages/Workspace';
 import { Dashboard } from './pages/Dashboard';
 import { PublicNote } from './pages/PublicNote';
+import { Landing } from './pages/Landing';
 import './index.css';
 
 function AppRoutes() {
@@ -15,19 +17,20 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public routes */}
+      <Route path="/" element={<Landing />} />
       <Route
         path="/login"
-        element={token ? <Navigate to="/" replace /> : <Login />}
+        element={token ? <Navigate to="/dashboard" replace /> : <Login />}
       />
       <Route
         path="/signup"
-        element={token ? <Navigate to="/" replace /> : <Signup />}
+        element={token ? <Navigate to="/dashboard" replace /> : <Signup />}
       />
       <Route path="/shared/:shareId" element={<PublicNote />} />
 
       {/* Protected routes */}
       <Route
-        path="/"
+        path="/workspace"
         element={
           <ProtectedRoute>
             <Workspace />
@@ -52,9 +55,11 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

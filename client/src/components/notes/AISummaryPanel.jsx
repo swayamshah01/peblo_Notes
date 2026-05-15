@@ -21,13 +21,13 @@ export function AISummaryPanel({
     <div style={{ width: '384px', backgroundColor: 'var(--bg-secondary)', borderLeft: '1px solid var(--border)', padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           ✨ AI Summary
         </h2>
         <button
           onClick={onClose}
           style={{ color: 'var(--text-muted)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
-          onMouseEnter={(e) => e.target.style.color = 'white'}
+          onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'}
           onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
         >
           <X size={20} />
@@ -49,7 +49,7 @@ export function AISummaryPanel({
           {/* Summary */}
           {aiResult.summary && (
             <div>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '8px' }}>Summary</h3>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>Summary</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6 }}>
                 {aiResult.summary}
               </p>
@@ -59,7 +59,7 @@ export function AISummaryPanel({
           {/* Action Items */}
           {aiResult.actionItems && aiResult.actionItems.length > 0 && (
             <div>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '12px' }}>Action Items</h3>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px' }}>Action Items</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {aiResult.actionItems.map((item, idx) => (
                   <label key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
@@ -70,7 +70,7 @@ export function AISummaryPanel({
                       onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
                     >
                       {checkedItems[idx] ? (
-                        <CheckCircle2 size={18} style={{ color: '#22c55e' }} />
+                        <CheckCircle2 size={18} style={{ color: 'var(--success)' }} />
                       ) : (
                         <div style={{ width: '20px', height: '20px', border: '2px solid var(--text-muted)', borderRadius: '50%' }} />
                       )}
@@ -93,7 +93,7 @@ export function AISummaryPanel({
           {/* Suggested Title */}
           {aiResult.suggestedTitle && (
             <div>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '12px' }}>Suggested Title</h3>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px' }}>Suggested Title</h3>
               <button
                 onClick={() => onApplyTitle(aiResult.suggestedTitle)}
                 style={{

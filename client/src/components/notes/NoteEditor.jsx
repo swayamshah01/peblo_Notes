@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Archive, Share2, Trash2, Sparkles, Copy, Check } from 'lucide-react';
+import { Archive, ArchiveRestore, Share2, Trash2, Sparkles, Check } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TagInput } from './TagInput';
 import { AISummaryPanel } from './AISummaryPanel';
 import { EmptyState } from '../common/EmptyState';
+import { ShareDialog } from './ShareDialog';
 
 export function NoteEditor({
   note,
@@ -21,6 +22,7 @@ export function NoteEditor({
   const [content, setContent] = useState('');
   const [tags, setTags] = useState([]);
   const [showAI, setShowAI] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export function NoteEditor({
       setContent(note.content || '');
       setTags(note.tags || []);
       setShowAI(false);
+      setShowShare(false);
     }
   }, [note]);
 
@@ -52,10 +55,10 @@ export function NoteEditor({
   };
 
   const handleShare = async () => {
-    await onShare();
-    if (note?.isPublic) {
-      const shareUrl = `${window.location.origin}/shared/${note.shareId}`;
-      navigator.clipboard.writeText(shareUrl);
+    const updatedNote = await onShare();
+    if (updatedNote?.isPublic && updatedNote.shareId) {
+      const shareUrl = `${window.location.origin}/shared/${updatedNote.shareId}`;
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -88,7 +91,7 @@ export function NoteEditor({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Untitled"
-            style={{ fontSize: '32px', fontWeight: 'bold', color: 'white', backgroundColor: 'transparent', border: 'none', outline: 'none', width: '100%' }}
+            style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', outline: 'none', width: '100%' }}
           />
         </div>
 
@@ -110,10 +113,10 @@ export function NoteEditor({
           </button>
 
           <button
-            onClick={handleShare}
+            onClick={() => setShowShare(true)}
             style={{
               padding: '8px',
-              color: note.isPublic ? '#22c55e' : 'var(--text-secondary)',
+              color: note.isPublic ? 'var(--success)' : 'var(--text-secondary)',
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -145,9 +148,9 @@ export function NoteEditor({
             style={{ padding: '8px', color: 'var(--text-secondary)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
             onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
             onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
-            title="Archive"
+            title={note.isArchived ? 'Restore note' : 'Archive note'}
           >
-            <Archive size={20} />
+            {note.isArchived ? <ArchiveRestore size={20} /> : <Archive size={20} />}
           </button>
         </div>
       </div>
@@ -188,6 +191,13 @@ export function NoteEditor({
           />
         )}
       </div>
+      {showShare && (
+        <ShareDialog
+          note={note}
+          onClose={() => setShowShare(false)}
+          onToggleShare={handleShare}
+        />
+      )}
     </div>
   );
 }

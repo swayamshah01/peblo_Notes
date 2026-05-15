@@ -9,7 +9,7 @@ export function PublicNoteView({ note }) {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
       <div style={{ width: '100%', maxWidth: '768px', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '48px' }}>
         {/* Title */}
-        <h1 style={{ fontSize: '40px', fontWeight: 'bold', color: 'white', marginBottom: '16px' }}>
+        <h1 style={{ fontSize: '40px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '16px' }}>
           {note.title || 'Untitled'}
         </h1>
 
@@ -38,9 +38,9 @@ export function PublicNoteView({ note }) {
         {/* Footer */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', fontSize: '13px', color: 'var(--text-muted)' }}>
           <p>
-            By <span style={{ color: 'white' }}>{note.author || 'Anonymous'}</span> ·{' '}
+            By <span style={{ color: 'var(--text-primary)' }}>{note.author || 'Anonymous'}</span> ·{' '}
             Last updated{' '}
-            <span style={{ color: 'white' }}>
+            <span style={{ color: 'var(--text-primary)' }}>
               {new Date(note.updatedAt).toLocaleDateString()}
             </span>
           </p>

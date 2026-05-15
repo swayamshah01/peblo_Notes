@@ -115,24 +115,27 @@ export function useNotes() {
     }
   }, [notes, activeNote]);
 
-  // Archive note
-  const archiveNoteData = useCallback(async (id) => {
+  // Archive or restore note
+  const setNoteArchivedData = useCallback(async (id, isArchived = true) => {
     try {
-      const response = await noteAPI.archiveNote(id);
+      const response = await noteAPI.setNoteArchived(id, isArchived);
       const updatedNote = response.data;
       if (Array.isArray(notes)) {
-        const filtered = notes.filter(n => n.id !== id);
-        setNotes(filtered);
+        const shouldRemainVisible = showArchived === updatedNote.isArchived;
+        const nextNotes = shouldRemainVisible
+          ? notes.map(n => n.id === id ? updatedNote : n)
+          : notes.filter(n => n.id !== id);
+        setNotes(nextNotes);
         if (activeNote?.id === id) {
-          setActiveNote(filtered.length > 0 ? filtered[0] : null);
+          setActiveNote(shouldRemainVisible ? updatedNote : (nextNotes[0] || null));
         }
       }
       return updatedNote;
     } catch (error) {
-      console.error('Error archiving note:', error);
+      console.error('Error updating archive status:', error);
       throw error;
     }
-  }, [notes, activeNote]);
+  }, [notes, activeNote, showArchived]);
 
   return {
     notes,
@@ -151,6 +154,6 @@ export function useNotes() {
     updateNoteData,
     deleteNoteData,
     toggleShareNote,
-    archiveNoteData,
+    archiveNoteData: setNoteArchivedData,
   };
 }

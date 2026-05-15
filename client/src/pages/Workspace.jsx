@@ -4,7 +4,6 @@ import { NotesList } from '../components/notes/NotesList';
 import { NoteEditor } from '../components/notes/NoteEditor';
 import { useNotes } from '../hooks/useNotes';
 import { generateSummary } from '../api/index.js';
-import { useDebounce } from '../hooks/useDebounce';
 import { Toast } from '../components/common/Toast';
 
 export function Workspace() {
@@ -25,15 +24,12 @@ export function Workspace() {
     deleteNoteData,
     toggleShareNote,
     archiveNoteData,
-    fetchNotes,
   } = useNotes();
 
   const [toast, setToast] = useState(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [allTags, setAllTags] = useState([]);
-
-  const debouncedSearch = useDebounce(searchQuery, 400);
 
   useEffect(() => {
     // Extract all unique tags from notes
@@ -74,6 +70,17 @@ export function Workspace() {
     }
   }, [activeNote, deleteNoteData]);
 
+  const handleDeleteSpecificNote = useCallback(async (note) => {
+    if (window.confirm(`Delete "${note.title || 'Untitled'}"? This cannot be undone.`)) {
+      try {
+        await deleteNoteData(note.id);
+        setToast({ message: 'Note deleted', type: 'success' });
+      } catch (error) {
+        setToast({ message: 'Failed to delete note', type: 'error' });
+      }
+    }
+  }, [deleteNoteData]);
+
   const handleShareNote = useCallback(async () => {
     try {
       const updated = await toggleShareNote(activeNote.id);
@@ -82,19 +89,52 @@ export function Workspace() {
       } else {
         setToast({ message: 'Note made private', type: 'info' });
       }
+      return updated;
     } catch (error) {
       setToast({ message: 'Failed to toggle share', type: 'error' });
+      throw error;
     }
   }, [activeNote, toggleShareNote]);
 
+  const handleShareSpecificNote = useCallback(async (note) => {
+    try {
+      if (note.isPublic && note.shareId) {
+        await navigator.clipboard.writeText(`${window.location.origin}/shared/${note.shareId}`);
+        setToast({ message: 'Link copied!', type: 'success' });
+        return note;
+      }
+
+      const updated = await toggleShareNote(note.id);
+      if (updated.isPublic && updated.shareId) {
+        await navigator.clipboard.writeText(`${window.location.origin}/shared/${updated.shareId}`);
+        setToast({ message: 'Public link created and copied', type: 'success' });
+      }
+      return updated;
+    } catch (error) {
+      setToast({ message: 'Failed to share note', type: 'error' });
+      throw error;
+    }
+  }, [toggleShareNote]);
+
   const handleArchiveNote = useCallback(async () => {
     try {
-      await archiveNoteData(activeNote.id);
-      setToast({ message: 'Note archived', type: 'success' });
+      const nextArchived = !activeNote.isArchived;
+      await archiveNoteData(activeNote.id, nextArchived);
+      setToast({ message: nextArchived ? 'Note archived' : 'Note restored', type: 'success' });
     } catch (error) {
-      setToast({ message: 'Failed to archive note', type: 'error' });
+      setToast({ message: 'Failed to update archive status', type: 'error' });
     }
   }, [activeNote, archiveNoteData]);
+
+  const handleArchiveSpecificNote = useCallback(async (note) => {
+    try {
+      const nextArchived = !note.isArchived;
+      await archiveNoteData(note.id, nextArchived);
+      setToast({ message: nextArchived ? 'Note archived' : 'Note restored', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Failed to update archive status', type: 'error' });
+    }
+  }, [archiveNoteData]);
 
   const handleGenerateSummary = useCallback(async () => {
     setIsGeneratingSummary(true);
@@ -127,6 +167,9 @@ export function Workspace() {
           tags={allTags}
           showArchived={showArchived}
           onToggleArchived={() => setShowArchived(!showArchived)}
+          onArchiveNote={handleArchiveSpecificNote}
+          onDeleteNote={handleDeleteSpecificNote}
+          onShareNote={handleShareSpecificNote}
         />
         <NoteEditor
           note={activeNote}

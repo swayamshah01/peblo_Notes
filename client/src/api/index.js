@@ -78,16 +78,14 @@ export const updateNote = async (id, data) => {
 };
 export const deleteNote = (id) => api.delete(`/notes/${id}`);
 export const toggleShare = async (id) => {
-  // First, update the share status
-  await api.patch(`/notes/${id}/share`);
-  // Then fetch the updated note to get all fields
-  const response = await api.get(`/notes/${id}`);
+  const response = await api.patch(`/notes/${id}/share`);
   return { ...response, data: normalizeNote(response.data.note) };
 };
-export const archiveNote = async (id) => {
-  const response = await api.patch(`/notes/${id}`, { is_archived: true });
+export const setNoteArchived = async (id, isArchived) => {
+  const response = await api.patch(`/notes/${id}`, { is_archived: isArchived });
   return { ...response, data: normalizeNote(response.data.note) };
 };
+export const archiveNote = (id) => setNoteArchived(id, true);
 export const getUserTags = () => api.get('/notes/tags');
 
 // AI endpoints
@@ -105,7 +103,29 @@ export const getSharedNote = async (shareId) => {
 // Insights endpoints
 export const getInsights = async () => {
   const response = await api.get('/insights');
-  return { ...response, data: response.data.insights };
+  const data = response.data || {};
+  return {
+    ...response,
+    data: {
+      totalNotes: data.total_notes || 0,
+      archivedNotes: data.archived_notes || 0,
+      publicNotes: data.public_notes || 0,
+      aiSummariesThisWeek: data.ai_stats?.calls_this_week || 0,
+      aiCallsTotal: data.ai_stats?.total_calls || 0,
+      weeklyActivity: (data.weekly_activity || []).map((item) => ({
+        day: new Date(item.date).toLocaleDateString(undefined, { weekday: 'short' }),
+        date: item.date,
+        notes: item.count,
+      })),
+      topTags: data.top_tags || [],
+      recentlyEdited: (data.recent_notes || []).map((note) => ({
+        ...normalizeNote(note),
+        updatedAtLabel: note.updated_at
+          ? new Date(note.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          : 'No date',
+      })),
+    },
+  };
 };
 
 export default api;

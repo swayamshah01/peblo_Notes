@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Archive, X } from 'lucide-react';
-import { useDebounce } from '../../hooks/useDebounce';
+import { Archive, Share2, Search, Trash2 } from 'lucide-react';
 import { Spinner } from '../common/Spinner';
 import { EmptyState } from '../common/EmptyState';
 
@@ -17,13 +16,26 @@ export function NotesList({
   tags,
   showArchived,
   onToggleArchived,
+  onArchiveNote,
+  onDeleteNote,
+  onShareNote,
 }) {
   const [allTags, setAllTags] = useState(tags || []);
-  const debouncedSearch = useDebounce(searchQuery, 400);
+  const [contextMenu, setContextMenu] = useState(null);
 
   useEffect(() => {
     setAllTags(tags || []);
   }, [tags]);
+
+  useEffect(() => {
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('scroll', closeMenu, true);
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('scroll', closeMenu, true);
+    };
+  }, []);
 
   const handleTagClick = (tag) => {
     if (selectedTag === tag) {
@@ -34,7 +46,7 @@ export function NotesList({
   };
 
   return (
-    <div style={{ width: '320px', backgroundColor: 'var(--bg-secondary)', borderRightColor: 'var(--border)', display: 'flex', flexDirection: 'column', height: '100vh', borderRight: '1px solid var(--border)' }}>
+    <div style={{ width: '320px', backgroundColor: 'var(--bg-secondary)', borderRightColor: 'var(--border)', display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid var(--border)' }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
         <button
@@ -118,8 +130,8 @@ export function NotesList({
         ) : !Array.isArray(notes) || notes.length === 0 ? (
           <EmptyState
             icon={null}
-            title="No notes yet"
-            description="Create your first note to get started!"
+            title={showArchived ? 'No archived notes' : 'No notes yet'}
+            description={showArchived ? 'Archived notes will appear here.' : 'Create your first note to get started.'}
           />
         ) : (
           <div style={{ padding: '8px' }}>
@@ -127,6 +139,15 @@ export function NotesList({
               <button
                 key={note.id}
                 onClick={() => onSelectNote(note)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  onSelectNote(note);
+                  setContextMenu({
+                    note,
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
+                }}
                 style={{
                   width: '100%',
                   textAlign: 'left',
@@ -134,19 +155,19 @@ export function NotesList({
                   borderRadius: '6px',
                   marginBottom: '8px',
                   backgroundColor: activeNote?.id === note.id ? 'var(--accent)' : 'var(--bg-tertiary)',
-                  color: 'white',
+                  color: activeNote?.id === note.id ? 'white' : 'var(--text-primary)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 150ms ease',
                 }}
               >
-                <h3 style={{ fontWeight: '500', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+                <h3 style={{ fontWeight: '600', color: activeNote?.id === note.id ? 'white' : 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
                   {note.title || 'Untitled'}
                 </h3>
-                <p style={{ fontSize: '12px', color: '#999999', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '8px' }}>
+                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'rgba(255,255,255,0.78)' : 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '8px' }}>
                   {note.content || 'No content'}
                 </p>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'rgba(255,255,255,0.68)' : 'var(--text-muted)' }}>
                   {note.updatedAt ? new Date(note.updatedAt).toLocaleDateString() : 'No date'}
                 </p>
                 {note.tags && note.tags.length > 0 && (
@@ -173,6 +194,26 @@ export function NotesList({
           </div>
         )}
       </div>
+      {contextMenu && (
+        <div
+          className="note-context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button onClick={() => { onShareNote(contextMenu.note); setContextMenu(null); }}>
+            <Share2 size={16} />
+            {contextMenu.note.isPublic ? 'Copy link' : 'Share note'}
+          </button>
+          <button onClick={() => { onArchiveNote(contextMenu.note); setContextMenu(null); }}>
+            <Archive size={16} />
+            {contextMenu.note.isArchived ? 'Restore note' : 'Archive note'}
+          </button>
+          <button className="danger" onClick={() => { onDeleteNote(contextMenu.note); setContextMenu(null); }}>
+            <Trash2 size={16} />
+            Delete note
+          </button>
+        </div>
+      )}
     </div>
   );
 }

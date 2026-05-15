@@ -254,10 +254,10 @@ const toggleShare = async (req, res) => {
       [newPublic, id, userId]
     );
 
+    const fullNote = await getNoteWithTags(id, userId);
     return res.status(200).json({
-      is_public: newPublic,
-      share_id: rows[0].share_id,
-      share_url: newPublic ? `/shared/${rows[0].share_id}` : null,
+      note: fullNote,
+      share_url: newPublic ? `/shared/${fullNote.share_id}` : null,
     });
   } catch (err) {
     console.error('ToggleShare error:', err.message);

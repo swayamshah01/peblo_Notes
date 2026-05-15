@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/common/Navbar';
 import { InsightsPanel } from '../components/dashboard/InsightsPanel';
 import { getInsights } from '../api/index.js';
@@ -8,7 +7,6 @@ import { Spinner } from '../components/common/Spinner';
 export function Dashboard() {
   const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInsights = async () => {
