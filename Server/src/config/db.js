@@ -2,19 +2,23 @@ const { Pool } = require('pg');
 const fs = require('fs/promises');
 const path = require('path');
 
-const getPoolConfig = () => {
-  if (process.env.DB_PASSWORD || process.env.DB_USER || process.env.DB_NAME) {
-    return {
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT || 5432),
-      database: process.env.DB_NAME || 'peblo_notes',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
-    };
+const isLocalDatabaseUrl = (connectionString) => {
+  try {
+    const { hostname } = new URL(connectionString);
+    return ['localhost', '127.0.0.1', 'postgres'].includes(hostname);
+  } catch (err) {
+    return false;
   }
+};
 
+const getPoolConfig = () => {
   if (process.env.DATABASE_URL) {
-    return { connectionString: process.env.DATABASE_URL };
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: isLocalDatabaseUrl(process.env.DATABASE_URL)
+        ? false
+        : { rejectUnauthorized: false },
+    };
   }
 
   return {
