@@ -11,9 +11,11 @@ export function Toast({ message, type = 'info', duration = 3000 }) {
 
   if (!isVisible) return null;
 
-  const bgColor = type === 'success' ? '#1f2937' : type === 'error' ? '#7f1d1d' : '#1e3a8a';
-  const borderColor = type === 'success' ? '#16a34a' : type === 'error' ? '#991b1b' : '#1e40af';
-  const textColor = type === 'success' ? '#dcfce7' : type === 'error' ? '#fecaca' : '#bfdbfe';
+  const bgColor = type === 'error'
+    ? 'color-mix(in srgb, var(--error) 18%, var(--surface-elevated))'
+    : 'var(--surface-elevated)';
+  const borderColor = type === 'error' ? 'var(--error)' : 'var(--border)';
+  const textColor = 'var(--text-primary)';
 
   return (
     <div style={{ position: 'fixed', bottom: '16px', right: '16px', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: bgColor, color: textColor, border: `1px solid ${borderColor}` }}>

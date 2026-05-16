@@ -84,7 +84,7 @@ export function NotesList({
                     fontSize: '12px',
                     borderRadius: '999px',
                     backgroundColor: selectedTag === tagName ? 'var(--accent)' : 'var(--bg-tertiary)',
-                    color: selectedTag === tagName ? 'white' : 'var(--text-secondary)',
+                    color: selectedTag === tagName ? 'var(--accent-contrast)' : 'var(--text-secondary)',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 150ms ease',
@@ -110,7 +110,7 @@ export function NotesList({
             borderRadius: '6px',
             fontSize: '13px',
             backgroundColor: showArchived ? 'var(--accent)' : 'var(--bg-tertiary)',
-            color: showArchived ? 'white' : 'var(--text-secondary)',
+            color: showArchived ? 'var(--accent-contrast)' : 'var(--text-secondary)',
             border: 'none',
             cursor: 'pointer',
             transition: 'all 150ms ease',
@@ -155,19 +155,19 @@ export function NotesList({
                   borderRadius: '6px',
                   marginBottom: '8px',
                   backgroundColor: activeNote?.id === note.id ? 'var(--accent)' : 'var(--bg-tertiary)',
-                  color: activeNote?.id === note.id ? 'white' : 'var(--text-primary)',
+                  color: activeNote?.id === note.id ? 'var(--accent-contrast)' : 'var(--text-primary)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 150ms ease',
                 }}
               >
-                <h3 style={{ fontWeight: '600', color: activeNote?.id === note.id ? 'white' : 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+                <h3 style={{ fontWeight: '600', color: activeNote?.id === note.id ? 'var(--accent-contrast)' : 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
                   {note.title || 'Untitled'}
                 </h3>
-                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'rgba(255,255,255,0.78)' : 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '8px' }}>
+                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'color-mix(in srgb, var(--accent-contrast) 76%, transparent)' : 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '8px' }}>
                   {note.content || 'No content'}
                 </p>
-                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'rgba(255,255,255,0.68)' : 'var(--text-muted)' }}>
+                <p style={{ fontSize: '12px', color: activeNote?.id === note.id ? 'color-mix(in srgb, var(--accent-contrast) 66%, transparent)' : 'var(--text-muted)' }}>
                   {note.updatedAt ? new Date(note.updatedAt).toLocaleDateString() : 'No date'}
                 </p>
                 {note.tags && note.tags.length > 0 && (

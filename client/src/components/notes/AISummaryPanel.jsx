@@ -41,9 +41,9 @@ export function AISummaryPanel({
           <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Generating AI summary...</p>
         </div>
       ) : aiResult?.error ? (
-        <div style={{ backgroundColor: '#7f1d1d', border: '1px solid #991b1b', padding: '16px', borderRadius: '8px', display: 'flex', gap: '12px' }}>
-          <AlertCircle size={20} style={{ color: '#fca5a5', flexShrink: 0 }} />
-          <p style={{ color: '#fecaca', fontSize: '13px' }}>{aiResult.error}</p>
+        <div style={{ backgroundColor: 'color-mix(in srgb, var(--error) 18%, var(--surface-elevated))', border: '1px solid var(--error)', padding: '16px', borderRadius: '8px', display: 'flex', gap: '12px' }}>
+          <AlertCircle size={20} style={{ color: 'var(--error)', flexShrink: 0 }} />
+          <p style={{ color: 'var(--text-primary)', fontSize: '13px' }}>{aiResult.error}</p>
         </div>
       ) : aiResult ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -123,7 +123,7 @@ export function AISummaryPanel({
                   cursor: 'pointer',
                   transition: 'background-color 150ms ease',
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#2a2a3e'}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--accent-light)'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--tag-bg)'}
               >
                 {aiResult.suggestedTitle}

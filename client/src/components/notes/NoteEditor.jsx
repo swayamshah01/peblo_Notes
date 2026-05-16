@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Archive, ArchiveRestore, ArrowLeft, Share2, Trash2, Sparkles, Check } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Share2, Trash2, Sparkles, Check, Bold, Italic, Underline, Code2 } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TagInput } from './TagInput';
 import { AISummaryPanel } from './AISummaryPanel';
 import { EmptyState } from '../common/EmptyState';
 import { ShareDialog } from './ShareDialog';
+import { renderNoteContent } from '../../utils/renderNoteContent.jsx';
 
 export function NoteEditor({
   note,
@@ -24,7 +25,9 @@ export function NoteEditor({
   const [showAI, setShowAI] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [editorMode, setEditorMode] = useState('edit');
   const loadedNoteIdRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     const nextNoteId = note?.id || null;
@@ -34,6 +37,7 @@ export function NoteEditor({
       setTitle('');
       setContent('');
       setTags([]);
+      setEditorMode('edit');
       return;
     }
 
@@ -44,6 +48,7 @@ export function NoteEditor({
       setTags(note.tags || []);
       setShowAI(false);
       setShowShare(false);
+      setEditorMode('edit');
     }
   }, [note]);
 
@@ -92,6 +97,55 @@ export function NoteEditor({
     await onGenerateSummary();
   };
 
+  const applyInlineFormat = (before, after = before, placeholder = 'text') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.slice(start, end);
+    const innerText = selectedText || placeholder;
+    const nextContent = `${content.slice(0, start)}${before}${innerText}${after}${content.slice(end)}`;
+    const nextCursorStart = start + before.length;
+    const nextCursorEnd = nextCursorStart + innerText.length;
+
+    setContent(nextContent);
+
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(nextCursorStart, selectedText ? nextCursorEnd : nextCursorEnd);
+    });
+  };
+
+  const handleEditorShortcut = (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+
+    const key = event.key.toLowerCase();
+    if (key === 'b') {
+      event.preventDefault();
+      applyInlineFormat('**', '**', 'bold text');
+    }
+    if (key === 'i') {
+      event.preventDefault();
+      applyInlineFormat('*', '*', 'italic text');
+    }
+    if (key === 'u') {
+      event.preventDefault();
+      applyInlineFormat('<u>', '</u>', 'underlined text');
+    }
+    if (key === '`') {
+      event.preventDefault();
+      applyInlineFormat('`', '`', 'code');
+    }
+  };
+
+  const formatActions = [
+    { label: 'Bold', icon: Bold, action: () => applyInlineFormat('**', '**', 'bold text') },
+    { label: 'Italic', icon: Italic, action: () => applyInlineFormat('*', '*', 'italic text') },
+    { label: 'Underline', icon: Underline, action: () => applyInlineFormat('<u>', '</u>', 'underlined text') },
+    { label: 'Code', icon: Code2, action: () => applyInlineFormat('`', '`', 'code') },
+  ];
+
   if (!note) {
     return (
       <div style={{ flex: 1, backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -136,7 +190,7 @@ export function NoteEditor({
           <button
             onClick={() => onDelete()}
             style={{ padding: '8px', color: 'var(--text-secondary)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
-            onMouseEnter={(e) => e.target.style.color = '#ef4444'}
+            onMouseEnter={(e) => e.target.style.color = 'var(--error)'}
             onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
             title="Delete note"
           >
@@ -189,21 +243,59 @@ export function NoteEditor({
       {/* Main Content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px' }}>
-          {/* Editor */}
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start typing..."
-            style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              color: 'var(--text-secondary)',
-              fontSize: '16px',
-              resize: 'none',
-              outline: 'none',
-              border: 'none',
-            }}
-          />
+          <div className="editor-format-toolbar" aria-label="Editor formatting toolbar">
+            <div className="editor-mode-switch" aria-label="Editor mode">
+              <button
+                type="button"
+                className={editorMode === 'edit' ? 'active' : ''}
+                onClick={() => setEditorMode('edit')}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className={editorMode === 'preview' ? 'active' : ''}
+                onClick={() => setEditorMode('preview')}
+              >
+                Preview
+              </button>
+            </div>
+
+            {editorMode === 'edit' && (
+              <div className="editor-format-group">
+                {formatActions.map(({ label, icon: Icon, action }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className="editor-format-button"
+                    onClick={action}
+                    title={label}
+                    aria-label={label}
+                  >
+                    <Icon size={16} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {editorMode === 'edit' ? (
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleEditorShortcut}
+              placeholder="Start typing..."
+              className="note-editor-textarea"
+              style={{
+                flex: 1,
+              }}
+            />
+          ) : (
+            <div className="note-preview-pane">
+              {renderNoteContent(content)}
+            </div>
+          )}
 
           {/* Tags */}
           <TagInput tags={tags} onTagsChange={handleTagsChange} />

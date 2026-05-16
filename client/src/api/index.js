@@ -20,6 +20,9 @@ const normalizeNote = (note) => {
     isPublic: note.is_public || false,
     shareId: note.share_id || null,
     isArchived: note.is_archived || false,
+    author: note.author || note.author_name || null,
+    createdAt: note.createdAt || note.created_at || null,
+    updatedAt: note.updatedAt || note.updated_at || null,
   };
 };
 
@@ -45,10 +48,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || '';
+    const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/signup');
+
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
