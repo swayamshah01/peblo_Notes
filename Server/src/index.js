@@ -12,21 +12,35 @@ const insightRoutes = require('./routes/insights.route');
 
 const app = express();
 
+const normalizeOrigin = (origin) => origin?.replace(/\/+$/, '');
+
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://peblo-notes-mu.vercel.app',
   'http://localhost:5173',
-].filter(Boolean);
+].filter(Boolean).map(normalizeOrigin);
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (
+      !origin ||
+      allowedOrigins.includes(normalizedOrigin) ||
+      normalizedOrigin.endsWith('.vercel.app')
+    ) {
+      return callback(null, normalizedOrigin || true);
     }
 
     return callback(new Error(`CORS blocked origin: ${origin}`));
   },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
