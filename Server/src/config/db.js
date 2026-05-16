@@ -2,14 +2,6 @@ const { Pool } = require('pg');
 const fs = require('fs/promises');
 const path = require('path');
 
-const getSslConfig = () => {
-  if (process.env.DB_SSL === 'false') {
-    return false;
-  }
-
-  return { rejectUnauthorized: false };
-};
-
 const getPoolConfig = () => {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is required.');
@@ -17,7 +9,7 @@ const getPoolConfig = () => {
 
   return {
     connectionString: process.env.DATABASE_URL,
-    ssl: getSslConfig(),
+    ssl: { rejectUnauthorized: false },
     max: Number(process.env.DB_POOL_MAX || 10),
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
     connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 10000),
