@@ -2,8 +2,11 @@ const { Pool } = require('pg');
 const fs = require('fs/promises');
 const path = require('path');
 
+const shouldUseSsl = () => process.env.DB_SSL === 'true' || process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: shouldUseSsl() ? { rejectUnauthorized: false } : false,
 });
 
 let isDatabaseReady = false;
